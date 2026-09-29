@@ -1,0 +1,24 @@
+{
+  "name": "@abang/backend",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node --watch src/server.js",
+    "start": "node src/server.js"
+  },
+  "dependencies": {
+    "@abang/database": "1.0.0",
+    "@abang/integrations": "1.0.0",
+    "@fastify/cookie": "^11.0.2",
+    "@fastify/cors": "^11.1.0",
+    "@fastify/formbody": "^8.0.2",
+    "@fastify/helmet": "^13.0.2",
+    "@fastify/multipart": "^9.0.3",
+    "@fastify/rate-limit": "^10.3.0",
+    "dotenv": "^17.2.2",
+    "fastify": "^5.6.1",
+    "jose": "^6.1.0",
+    "zod": "^3.25.76"
+  }
+}

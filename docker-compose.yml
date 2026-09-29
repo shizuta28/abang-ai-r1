@@ -1,0 +1,47 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: abang
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-abang_local_only}
+      POSTGRES_DB: abang
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U abang -d abang"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    env_file:
+      - .env
+    environment:
+      DATABASE_PROVIDER: postgres
+      DATABASE_URL: postgresql://abang:${POSTGRES_PASSWORD:-abang_local_only}@postgres:5432/abang
+      PORT: 4000
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "4000:4000"
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.web
+    environment:
+      NUXT_API_INTERNAL: http://api:4000
+      NUXT_PUBLIC_SITE_URL: http://localhost:3000
+    depends_on:
+      - api
+    ports:
+      - "3000:3000"
+
+volumes:
+  pgdata:

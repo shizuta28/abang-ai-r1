@@ -1,0 +1,34 @@
+{
+  "name": "abang-ai",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Abang AI public learning platform, shop, and admin portal.",
+  "engines": {
+    "node": ">=20"
+  },
+  "workspaces": [
+    "frontend",
+    "backend",
+    "database",
+    "integrations"
+  ],
+  "scripts": {
+    "dev": "concurrently -n api,web -c blue,magenta \"npm run dev -w @abang/backend\" \"npm run dev -w @abang/frontend\"",
+    "build": "npm run build -w @abang/frontend",
+    "start": "concurrently -n api,web -c blue,magenta \"npm run start -w @abang/backend\" \"npm run start -w @abang/frontend\"",
+    "db:generate": "npm run generate -w @abang/database",
+    "db:push": "npm run push -w @abang/database",
+    "db:migrate": "npm run migrate -w @abang/database",
+    "db:seed": "npm run seed -w @abang/database",
+    "test": "node --test integrations/src/toyyibpay.test.js"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  },
+  "allowScripts": {
+    "prisma": true,
+    "@prisma/client": true,
+    "@prisma/engines": true,
+    "esbuild": true
+  }
+}

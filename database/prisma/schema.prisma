@@ -1,0 +1,172 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  MEMBER
+  ADMIN
+}
+
+enum ProductType {
+  COURSE
+  DIGITAL
+  RESOURCE
+}
+
+enum OrderStatus {
+  PENDING
+  PAID
+  FAILED
+  CANCELLED
+}
+
+enum ThreadStatus {
+  DRAFT
+  IN_REVIEW
+  SCHEDULED
+  PUBLISHED
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String?
+  avatarUrl    String?  @map("avatar_url")
+  googleId     String?  @unique @map("google_id")
+  passwordHash String?  @map("password_hash")
+  role         Role     @default(MEMBER)
+  locale       String   @default("bm")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+  orders       Order[]
+  leads        Lead[]
+
+  @@map("users")
+}
+
+model Lead {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  phone     String?
+  source    String?
+  message   String?
+  status    String   @default("new")
+  userId    String?  @map("user_id")
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([status])
+  @@map("leads")
+}
+
+model Product {
+  id            String      @id @default(cuid())
+  slug          String      @unique
+  titleBm       String      @map("title_bm")
+  titleEn       String      @map("title_en")
+  summaryBm     String      @map("summary_bm")
+  summaryEn     String      @map("summary_en")
+  descriptionBm String      @default("") @map("description_bm") @db.Text
+  descriptionEn String      @default("") @map("description_en") @db.Text
+  priceCents    Int         @map("price_cents")
+  currency      String      @default("MYR")
+  type          ProductType
+  published     Boolean     @default(false)
+  coverUrl      String?     @map("cover_url")
+  fileKey       String?     @map("file_key")
+  createdAt     DateTime    @default(now()) @map("created_at")
+  updatedAt     DateTime    @updatedAt @map("updated_at")
+  items         OrderItem[]
+
+  @@index([type, published])
+  @@map("products")
+}
+
+model Order {
+  id            String      @id @default(cuid())
+  userId        String?     @map("user_id")
+  user          User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
+  email         String
+  phone         String
+  status        OrderStatus @default(PENDING)
+  totalCents    Int         @map("total_cents")
+  currency      String      @default("MYR")
+  billCode      String?     @map("bill_code")
+  externalRef   String      @unique @map("external_ref")
+  paymentStatus String?     @map("payment_status")
+  failureReason String?     @map("failure_reason")
+  paidAt        DateTime?   @map("paid_at")
+  createdAt     DateTime    @default(now()) @map("created_at")
+  updatedAt     DateTime    @updatedAt @map("updated_at")
+  items         OrderItem[]
+  payment       PaymentRecord?
+
+  @@index([userId])
+  @@index([status])
+  @@map("orders")
+}
+
+model OrderItem {
+  id         String  @id @default(cuid())
+  orderId    String  @map("order_id")
+  productId  String  @map("product_id")
+  title      String
+  priceCents Int     @map("price_cents")
+  order      Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product    Product @relation(fields: [productId], references: [id], onDelete: Restrict)
+
+  @@index([orderId])
+  @@map("order_items")
+}
+
+model PaymentRecord {
+  id          String    @id @default(cuid())
+  orderId     String    @unique @map("order_id")
+  provider    String    @default("toyyibpay")
+  billCode    String    @map("bill_code")
+  refNo       String?   @map("ref_no")
+  status      String
+  amountCents Int       @map("amount_cents")
+  verifiedAt  DateTime? @map("verified_at")
+  rawPayload  Json?     @map("raw_payload")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  order       Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@map("payment_records")
+}
+
+model SalesPage {
+  id        String   @id @default(cuid())
+  slug      String   @unique
+  titleBm   String   @map("title_bm")
+  titleEn   String   @map("title_en")
+  bodyBm    String   @map("body_bm") @db.Text
+  bodyEn    String   @map("body_en") @db.Text
+  published Boolean  @default(false)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("sales_pages")
+}
+
+model ThreadPost {
+  id             String       @id @default(cuid())
+  body           String       @db.Text
+  status         ThreadStatus @default(DRAFT)
+  scheduledAt    DateTime?    @map("scheduled_at")
+  publishedAt    DateTime?    @map("published_at")
+  threadsMediaId String?      @map("threads_media_id")
+  reviewNote     String?      @map("review_note")
+  createdAt      DateTime     @default(now()) @map("created_at")
+  updatedAt      DateTime     @updatedAt @map("updated_at")
+
+  @@index([status, scheduledAt])
+  @@map("thread_posts")
+}

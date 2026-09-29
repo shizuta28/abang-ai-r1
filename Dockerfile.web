@@ -1,0 +1,13 @@
+FROM node:22-alpine
+WORKDIR /app
+COPY package.json package-lock.json ./
+COPY frontend/package.json ./frontend/package.json
+COPY backend/package.json ./backend/package.json
+COPY database/package.json ./database/package.json
+COPY integrations/package.json ./integrations/package.json
+RUN npm ci
+COPY . .
+RUN npm run build -w @abang/frontend
+WORKDIR /app/frontend
+EXPOSE 3000
+CMD ["node", ".output/server/index.mjs"]
